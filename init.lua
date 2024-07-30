@@ -203,7 +203,6 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 -- ## Custom Keymaps ##
 -- exit file
 vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
-vim.keymap.set()
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
