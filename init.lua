@@ -118,6 +118,12 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 -- exit file
 vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
 
+-- new line below and exit insert mode
+vim.keymap.set('n', '<leader>o', 'o<Esc>')
+
+-- new line above and exit insert mode
+vim.keymap.set('n', '<leader>O', 'O<Esc>')
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
