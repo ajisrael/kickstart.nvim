@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -110,7 +110,10 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
+
+  -- netrw hides line numbers by default; keep its other defaults but turn numbers on
+  vim.g.netrw_bufsettings = 'noma nomod nobl nowrap ro nu rnu'
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -229,16 +232,29 @@ do
   --  Use CTRL+<hjkl> to switch between windows
   --
   --  See `:help wincmd` for a list of all window commands
-  vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-  vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-  vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-  vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+  -- vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+  -- vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+  -- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+  -- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
   -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
   -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
   -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
   -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
   -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
+
+  -- ## Custom Keymaps ##
+  -- exit file
+  vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
+
+  -- new line below and exit insert mode
+  vim.keymap.set('n', '<leader>o', 'o<Esc>')
+
+  -- new line above and exit insert mode
+  vim.keymap.set('n', '<leader>O', 'O<Esc>')
+
+  -- toggle markdown preview
+  vim.keymap.set('n', '<C-p>', ':RenderMarkdown toggle<CR>', { desc = 'Toggle markdown preview', silent = true })
 
   -- [[ Basic Autocommands ]]
   --  See `:help lua-guide-autocommands`
@@ -250,6 +266,15 @@ do
     desc = 'Highlight when yanking (copying) text',
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
+  })
+
+  -- Turn on spell check for markdown files
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = { 'markdown' },
+    callback = function()
+      vim.opt_local.spell = true
+      vim.opt_local.spelllang = 'en_us'
+    end,
   })
 end
 
@@ -376,6 +401,10 @@ do
     },
   }
 
+  -- Automatically close pairs of brackets, quotes, etc. as you type
+  vim.pack.add { gh 'windwp/nvim-autopairs' }
+  require('nvim-autopairs').setup {}
+
   -- [[ Colorscheme ]]
   -- You can easily change to a different colorscheme.
   -- Change the name of the colorscheme plugin below, and then
@@ -385,8 +414,11 @@ do
   vim.pack.add { gh 'folke/tokyonight.nvim' }
   ---@diagnostic disable-next-line: missing-fields
   require('tokyonight').setup {
+    transparent = true,
     styles = {
       comments = { italic = false }, -- Disable italics in comments
+      sidebars = 'transparent',
+      floats = 'transparent',
     },
   }
 
@@ -394,6 +426,9 @@ do
   -- Like many other themes, this one has different styles, and you could load
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
   vim.cmd.colorscheme 'tokyonight-night'
+
+  -- Lighten relative line numbers; default LineNr (#3b4261) is too dim to read.
+  vim.api.nvim_set_hl(0, 'LineNr', { fg = '#565f89' })
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
@@ -585,7 +620,16 @@ do
 end
 
 -- ============================================================
--- SECTION 6: LSP
+-- SECTION 6: HARPOON
+-- Quick file marking/navigation; keymaps live in after/plugin/harpoon2.lua
+-- ============================================================
+do
+  -- `plenary.nvim` is already installed above as a Telescope dependency.
+  vim.pack.add { { src = gh 'ThePrimeagen/harpoon', version = 'harpoon2' } }
+end
+
+-- ============================================================
+-- SECTION 7: LSP
 -- LSP keymaps, server configuration, Mason tools installations
 -- ============================================================
 do
@@ -692,16 +736,17 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
-    -- gopls = {},
-    -- pyright = {},
+    clangd = {},
+    gopls = {},
+    pyright = {},
+    html = {},
     -- rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
@@ -771,7 +816,7 @@ do
 end
 
 -- ============================================================
--- SECTION 7: FORMATTING
+-- SECTION 8: FORMATTING
 -- conform.nvim setup and keymap
 -- ============================================================
 do
@@ -809,7 +854,7 @@ do
 end
 
 -- ============================================================
--- SECTION 8: AUTOCOMPLETE & SNIPPETS
+-- SECTION 9: AUTOCOMPLETE & SNIPPETS
 -- blink.cmp and luasnip setup
 -- ============================================================
 do
@@ -852,7 +897,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -891,7 +936,7 @@ do
 end
 
 -- ============================================================
--- SECTION 9: TREESITTER
+-- SECTION 10: TREESITTER
 -- Parser installation, syntax highlighting, folds, indentation
 -- ============================================================
 do
@@ -953,7 +998,34 @@ do
 end
 
 -- ============================================================
--- SECTION 10: OPTIONAL EXAMPLES / NEXT STEPS
+-- SECTION 11: MARKDOWN RENDERING
+-- render-markdown.nvim; needs nvim-treesitter's `main` branch (installed above)
+-- ============================================================
+do
+  -- Renders markdown headings, code blocks, etc. directly in the buffer.
+  -- Loaded eagerly (matches upstream's general pattern for its own plugins);
+  -- the `<C-p>` toggle keymap (defined in SECTION 2) works regardless of load timing.
+  vim.pack.add { gh 'MeanderingProgrammer/render-markdown.nvim' }
+  -- NOTE: `headings` -> `heading` and `code.icon` (a static icon) were renamed/removed
+  -- upstream (render-markdown.nvim 4.0.0) in favor of grouping by component and deriving
+  -- code block icons from the `mini.icons` provider (already installed in SECTION 4)
+  require('render-markdown').setup {
+    -- Customize rendering options
+    heading = {
+      -- Adds icons to headings (requires Nerd Font)
+      icons = { '󰲡 ', '󰲣 ', '󰲥 ', '󰲧 ', '󰲩 ', '󰲫 ' },
+      -- Highlight background for headings
+      backgrounds = { 'DiffAdd', 'DiffChange', 'DiffDelete', 'Normal', 'Normal', 'Normal' },
+    },
+    code = {
+      -- Highlight style for code blocks
+      style = 'normal',
+    },
+  }
+end
+
+-- ============================================================
+-- SECTION 12: OPTIONAL EXAMPLES / NEXT STEPS
 -- kickstart.plugins.* examples
 -- ============================================================
 do
